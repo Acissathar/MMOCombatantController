@@ -1,0 +1,22 @@
+{
+  "name": "com.acissathar.mmocombatantcontroller",
+  "displayName": "ORK MMO Combatant Character Controller",
+  "version": "0.0.1",
+  "unity": "6000.0",
+  "description": "An MMO inspired character controller specifically integrated for ORK Framework.",
+  "author": {
+    "name": "Will B",
+    "email": "acissathar@gmail.com",
+    "url": "https://github.com/Acissathar/MMOCombatantController"
+  },
+  "dependencies": {
+    "com.unity.cinemachine": "3.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Controller Sandbox Demo",
+      "description": "A demo scene to test the character controller, along with a few extra prefabs and examples of controller usage.",
+      "path": "Samples~"
+    }
+  ]
+}
