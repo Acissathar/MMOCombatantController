@@ -64,7 +64,7 @@ namespace MMOCombatantController.Runtime.Core
             "How much force to apply when swimming up or down for a combatant.",
             ""
         )]
-        public float SwimStrength = 5.0f;
+        public float SwimStrength = 2.5f;
         
         public MoveSpeed<GameObjectSelection> SwimSpeed = new (MoveSpeedType.Walk, 5);
         
@@ -103,7 +103,7 @@ namespace MMOCombatantController.Runtime.Core
                     }
                 }
 
-                _combatantController.Settings = setting;
+                _combatantController.InitSettings(setting);
             }
 
             public virtual void Move(Vector3 change)

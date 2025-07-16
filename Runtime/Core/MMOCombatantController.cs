@@ -21,6 +21,19 @@ namespace MMOCombatantController.Runtime.Core
         
         #endregion
         
+        #region Editor - Settings
+
+        [SerializeField] private bool allowDoubleJump = true;
+        [SerializeField] private float jumpHeight = 5.0f;
+        [SerializeField] private float gravity = 15.0f;
+        [SerializeField] private float rotationSpeed = 1.0f;
+        [SerializeField] private float swimLevel = 1.25f;
+        [SerializeField] private float swimStrength = 2.5f;
+        [SerializeField] private MoveSpeed<GameObjectSelection> swimMoveSpeed;
+        [SerializeField] private bool useHeadIK;
+        
+        #endregion
+        
         #region Properties
         
         public Combatant Combatant { get; private set; }
@@ -41,7 +54,7 @@ namespace MMOCombatantController.Runtime.Core
         
         private float WalkSpeed => Combatant.Setting.moveSettings.MoveSpeed.GetWalkSpeed(Combatant);
         private float RunSpeed => Combatant.Setting.moveSettings.MoveSpeed.GetRunSpeed(Combatant);
-        private float SwimSpeed => Settings.SwimSpeed.GetCombatantSpeed(Combatant);
+        private float SwimSpeed => swimMoveSpeed.GetCombatantSpeed(Combatant);
         
         #endregion
         
@@ -59,15 +72,13 @@ namespace MMOCombatantController.Runtime.Core
         private float _currentSpeed; 
         private MoveState _currentMoveState;
         private bool _autoRun;
-        private bool _cameraAutoRun; // Toggle to track if camera wants us to auto run. This is a separate field to allow for smoothing transitions
+        private bool _cameraAutoRun;
         private bool _walking; 
         private bool _groundDetected = true;
         private float _verticalSpeed = -10;
         private bool _canDoubleJump;
-
         private float _distanceFromWaterSurface;
-
-        private float _weightIK; //Weight of IK look
+        private float _weightIK;
         
         #endregion
         
@@ -94,20 +105,14 @@ namespace MMOCombatantController.Runtime.Core
         private readonly int _yAxisMovementHash = Animator.StringToHash("Y Axis Movement");
         
         #endregion
-
-        #region ORK References
         
-        public MMOCombatantCharacterControllerComponentSetting Settings;
-        
-        #endregion
-
         #region Unity Lifecycle Methods
 
         protected void Awake()
         {
             if (!TryGetComponent(out _characterCapsule))
             {
-                InternalDebug.LogErrorFormat($"Character Capsulse not found on {gameObject.name}");
+                InternalDebug.LogErrorFormat($"Character Capsule not found on {gameObject.name}");
             }
             
             if (!TryGetComponent(out _characterMover))
@@ -198,13 +203,15 @@ namespace MMOCombatantController.Runtime.Core
         
         private void OnAnimatorIK(int layerIndex)
         {
-            if (Settings.UseHeadIK && MMOCombatantThirdPersonFollowCameraController != null)
+            //From landing animation, slowly build weight back up to give it smoothing time
+            if (_weightIK < 0.75f)
             {
-                //From landing animation, slowly build weight back up to give it smoothing time
-                if (_weightIK < 0.75f)
-                    _weightIK = Mathf.Clamp(_weightIK + Time.deltaTime, 0, 0.75f);
-
-                //Set our IK look position to where our camera is looking
+                _weightIK = Mathf.Clamp(_weightIK + Time.deltaTime, 0, 0.75f);
+            }
+            
+            if (useHeadIK && MMOCombatantThirdPersonFollowCameraController != null)
+            {
+                //Set combatant's IK look position to where the camera is looking
                 _animator.SetLookAtWeight(_weightIK, _weightIK / 3, 0.75f, 1, 0.5f);
                 _animator.SetLookAtPosition(
                     transform.position
@@ -221,7 +228,7 @@ namespace MMOCombatantController.Runtime.Core
         private void GroundedLocomotion()
         {
             var rotation =
-                transform.eulerAngles + new Vector3(0.0f, Inputs.Horizontal * Settings.RotationSpeed, 0.0f);
+                transform.eulerAngles + new Vector3(0.0f, Inputs.Horizontal * rotationSpeed, 0.0f);
             transform.eulerAngles = rotation;
 
             _groundDetected = DetectGroundAndCheckIfGrounded(
@@ -237,7 +244,7 @@ namespace MMOCombatantController.Runtime.Core
                 _currentMoveState = MoveState.Sliding;
             }
 
-            if (isGrounded || (Settings.AllowDoubleJump && _canDoubleJump) )
+            if (isGrounded || (allowDoubleJump && _canDoubleJump) )
             {
                 _currentMoveState = isGrounded ? MoveState.Grounded : MoveState.Airborne;
 
@@ -247,12 +254,12 @@ namespace MMOCombatantController.Runtime.Core
                     {
                         _canDoubleJump = false;
                         _animator.SetBool(_jumpHash, true); //Play double jumping animation
-                        _verticalSpeed = Settings.JumpHeight * 1.1f; // Set gravity a little higher with a double jump
+                        _verticalSpeed = jumpHeight * 1.1f; // Set gravity a little higher with a double jump
                     }
                     else
                     {
                         _animator.SetBool(_jumpHash, true); //Play jumping animation
-                        _verticalSpeed = Settings.JumpHeight; //Set current gravity force to jump height
+                        _verticalSpeed = jumpHeight; //Set current gravity force to jump height
                     }
 
                     _nextUngroundedTime = -1.0f;
@@ -277,10 +284,10 @@ namespace MMOCombatantController.Runtime.Core
 
                 BounceDownIfTouchedCeiling();
 
-                _verticalSpeed -= Settings.Gravity * Time.deltaTime; //If in air, add gravity force every frame
+                _verticalSpeed -= gravity * Time.deltaTime;
             }
 
-            // Check auto run status. If player gives a vertical movement, cancel auto run.
+            // Check auto run status. If the combatant gets a vertical movement, cancel auto run.
             // If auto run is still active, then simulate full forward movement and keep autorun on.
             if (_moveInput.z != 0)
             {
@@ -295,7 +302,7 @@ namespace MMOCombatantController.Runtime.Core
             // If in water, slow down speed towards walk speed as we get deeper, unless already walking...
             if (InWater)
             {
-                if (_distanceFromWaterSurface >= Settings.SwimLevel)
+                if (_distanceFromWaterSurface >= swimLevel)
                 {
                     _animator.SetBool(_swimmingHash, true);
                     _currentMoveState = MoveState.Swimming;
@@ -313,7 +320,7 @@ namespace MMOCombatantController.Runtime.Core
                         _currentSpeed = Mathf.Lerp(
                             RunSpeed,
                             WalkSpeed,
-                            _distanceFromWaterSurface / Settings.SwimLevel
+                            _distanceFromWaterSurface / swimLevel
                         );
                     }
                 }
@@ -368,7 +375,7 @@ namespace MMOCombatantController.Runtime.Core
         private void SwimmingLocomotion()
         {
             var rotation =
-                transform.eulerAngles + new Vector3(0.0f, Inputs.Horizontal * Settings.RotationSpeed, 0.0f);
+                transform.eulerAngles + new Vector3(0.0f, Inputs.Horizontal * rotationSpeed, 0.0f);
             transform.eulerAngles = rotation;
 
             _groundDetected = DetectGroundAndCheckIfGrounded(
@@ -382,37 +389,37 @@ namespace MMOCombatantController.Runtime.Core
             {
                 _canDoubleJump = true;
 
-                if (Inputs.Jump && _distanceFromWaterSurface - 0.075f <= Settings.SwimLevel)
+                if (Inputs.Jump && _distanceFromWaterSurface - 0.075f <= swimLevel)
                 {
                     jumpingFromWater = true;
 
-                    if (!InWater && Settings.AllowDoubleJump && _canDoubleJump)
+                    if (!InWater && allowDoubleJump && _canDoubleJump)
                     {
                         _canDoubleJump = false;
                         _animator.SetBool(_jumpHash, true);
-                        _verticalSpeed = Settings.SwimStrength * 1.1f; // Set gravity a little higher with a double jump
+                        _verticalSpeed = jumpHeight * 1.1f; // Set gravity a little higher with a double jump
                     }
                     else
                     {
                         _animator.SetBool(_jumpHash, true);
-                        _verticalSpeed = Settings.SwimStrength * 1.25f; // Increase jump height to counter water and allow for jumping out
+                        _verticalSpeed = jumpHeight * 1.25f; // Increase jump height to counteract water and to help jump out of the water
                     }
 
                     _nextUngroundedTime = -1.0f;
                 }
-                else if (Inputs.SwimUp && _distanceFromWaterSurface > Settings.SwimLevel)
+                else if (Inputs.SwimUp && _distanceFromWaterSurface > swimLevel)
                 {
-                    _verticalSpeed = Settings.JumpHeight / 2.0f;
+                    _verticalSpeed = swimStrength;
                 }
                 else if (Inputs.SwimDown)
                 {
-                    _verticalSpeed = -Settings.SwimStrength / 2.0f;
+                    _verticalSpeed = -swimStrength;
                     _animator.SetFloat(_yAxisMovementHash, -1.0f, 0.1f, Time.deltaTime);
                 }
             }
             _animator.SetFloat(_yAxisMovementHash, _verticalSpeed, 0.1f, Time.deltaTime);
 
-            // Check auto run status. If player gives a vertical movement, cancel auto run.
+            // Check auto run status. If the combatant gives a vertical movement, cancel auto run.
             // If auto run is still active, then simulate full forward movement and keep autorun on.
             if (_moveInput.z != 0)
             {
@@ -471,7 +478,7 @@ namespace MMOCombatantController.Runtime.Core
                     Mathf.Clamp(
                         transform.position.y,
                         float.MinValue,
-                        CurrentWaterSurfaceLevel - Settings.SwimLevel
+                        CurrentWaterSurfaceLevel - swimLevel
                     ),
                     transform.position.z
                 );
@@ -486,7 +493,7 @@ namespace MMOCombatantController.Runtime.Core
         {
             _distanceFromWaterSurface = CurrentWaterSurfaceLevel - transform.position.y;
 
-            if (InWater && _distanceFromWaterSurface >= Settings.SwimLevel)
+            if (InWater && _distanceFromWaterSurface >= swimLevel)
             {
                 _animator.SetBool(_swimmingHash, true);
                 _currentMoveState = MoveState.Swimming;
@@ -519,15 +526,22 @@ namespace MMOCombatantController.Runtime.Core
                         break;
 
                     case CombatantCameraState.Manual:
-                        _moveInput = new Vector3(
-                            Mathf.Clamp(
-                                Inputs.Strafe + Inputs.Horizontal,
-                                -1.0f,
-                                1.0f
-                            ),
-                            0.0f,
-                            Inputs.Vertical
-                        );
+                        if ( (MMOCombatantThirdPersonFollowCameraController.Inputs.LeftMouseClick && Inputs.Vertical != 0.0f) || MMOCombatantThirdPersonFollowCameraController.Inputs.RightMouseClick )
+                        {
+                            _moveInput = new Vector3(
+                                Mathf.Clamp(
+                                    Inputs.Strafe + Inputs.Horizontal,
+                                    -1.0f,
+                                    1.0f
+                                ),
+                                0.0f,
+                                Inputs.Vertical
+                            );
+                        }
+                        else
+                        {
+                            _moveInput = Vector3.zero;
+                        }
                         break;
 
                     default:
@@ -580,6 +594,21 @@ namespace MMOCombatantController.Runtime.Core
 
         #region Public Methods
 
+        public void InitSettings(MMOCombatantCharacterControllerComponentSetting settings)
+        {
+            if (settings != null)
+            {
+                allowDoubleJump = settings.AllowDoubleJump;
+                jumpHeight = settings.JumpHeight;
+                gravity = settings.Gravity;
+                rotationSpeed = settings.RotationSpeed;
+                swimLevel = settings.SwimLevel;
+                swimStrength = settings.SwimStrength;
+                swimMoveSpeed = settings.SwimSpeed;
+                useHeadIK = settings.UseHeadIK;
+            }
+        }
+        
         public void SetRotation(float rot)
         {
             transform.rotation = Quaternion.Euler(0, rot, 0);
