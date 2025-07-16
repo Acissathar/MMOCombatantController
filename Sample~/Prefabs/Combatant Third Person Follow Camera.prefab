@@ -47,18 +47,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cinemachineCamera: {fileID: 3095725298176714618}
   tilt: {fileID: 9138732882597572298}
-  height: 1.75
+  heightOffset: 1.75
   maxDistance: 15
   maxTilt: 25
   autoAdjustSpeed: 1
+  cameraAutoAdjustAngle: 0
   collisionCushion: 0.35
   clipPlaneCushion: 1.75
-  cameraAutoAdjustAngle: 0
   collisionRayGridX: 9
   collisionRayGridY: 5
   collisionMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1
   xInputSensitivity: 2.5
   yInputSensitivity: 2.5
   zoomInputSensitivity: 35

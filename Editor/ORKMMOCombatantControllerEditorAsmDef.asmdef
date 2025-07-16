@@ -1,0 +1,16 @@
+{
+    "name": "ORKMMOCombatantControllerEditorAsmDef",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b879bfaa594bd054c977bcd929319884"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

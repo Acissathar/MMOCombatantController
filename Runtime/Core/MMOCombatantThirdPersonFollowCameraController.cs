@@ -17,43 +17,43 @@ namespace MMOCombatantController.Runtime.Core
 
         #region Editor - Settings
         
-        [SerializeField] [Tooltip("How high up the camera is.")]
-        private float height;
+        [SerializeField]
+        private float heightOffset;
 
-        [SerializeField] [Tooltip("Maximum distance from target.")]
+        [SerializeField]
         private float maxDistance;
 
-        [SerializeField] [Tooltip("Maximum amount of camera tilt (X Axis)")]
+        [SerializeField]
         private float maxTilt;
 
-        [SerializeField] [Tooltip("How fast to move the camera when auto adjusting.")]
+        [SerializeField]
         private float autoAdjustSpeed;
 
-        [SerializeField] [Tooltip("Cushion offset for determining collisions.")]
+        [SerializeField]
+        private float cameraAutoAdjustAngle;
+        
+        [SerializeField]
         private float collisionCushion;
         
-        [SerializeField] [Tooltip("Cushion offset for camera clip planes, used for determining collisions.")]
+        [SerializeField]
         private float clipPlaneCushion;
         
-        [SerializeField] [Tooltip("Angle the camera should automatically adjust to when in Automatic mode.")]
-        private float cameraAutoAdjustAngle;
-
-        [SerializeField] [Tooltip("Number of rows for ray cast grid.")]
+        [SerializeField]
         private int collisionRayGridX;
 
-        [SerializeField] [Tooltip("Number of columns for ray cast grid.")]
+        [SerializeField]
         private int collisionRayGridY;
 
-        [SerializeField] [Tooltip("Layers the camera collides with.")]
+        [SerializeField]
         private LayerMask collisionMask;
 
-        [SerializeField] [Tooltip("Multiplier for X input for camera movement.")]
+        [SerializeField]
         private float xInputSensitivity;
 
-        [SerializeField] [Tooltip("Multiplier for Y input for camera movement.")]
+        [SerializeField]
         private float yInputSensitivity;
 
-        [SerializeField] [Tooltip("Multiplier for zoom input for camera.")]
+        [SerializeField]
         private float zoomInputSensitivity;
 
         #endregion
@@ -205,7 +205,7 @@ namespace MMOCombatantController.Runtime.Core
                 _target = combatantController;
                 _target.MMOCombatantThirdPersonFollowCameraController = this;
 
-                transform.position = _target.transform.position + Vector3.up * height;
+                transform.position = _target.transform.position + Vector3.up * heightOffset;
                 transform.rotation = _target.transform.rotation;
 
                 tilt.eulerAngles = new Vector3(
@@ -256,7 +256,7 @@ namespace MMOCombatantController.Runtime.Core
 
         private void SetCameraTransforms()
         {
-            transform.position = _target.transform.position + Vector3.up * height;
+            transform.position = _target.transform.position + Vector3.up * heightOffset;
             transform.eulerAngles = new Vector3(
                 transform.eulerAngles.x,
                 _currentPan,

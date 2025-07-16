@@ -23,13 +23,14 @@ namespace MMOCombatantController.Runtime.Core
         
         #region Editor - Settings
 
-        [SerializeField] private bool allowDoubleJump = true;
-        [SerializeField] private float jumpHeight = 5.0f;
-        [SerializeField] private float gravity = 15.0f;
-        [SerializeField] private float rotationSpeed = 1.0f;
-        [SerializeField] private float swimLevel = 1.25f;
-        [SerializeField] private float swimStrength = 2.5f;
-        [SerializeField] private MoveSpeed<GameObjectSelection> swimMoveSpeed;
+        [SerializeField] private bool allowDoubleJump;
+        [SerializeField] private float jumpHeight;
+        [SerializeField] private float gravity;
+        [SerializeField] private float minVerticalSpeed;
+        [SerializeField] private float rotationSpeed;
+        [SerializeField] private float swimLevel;
+        [SerializeField] private float swimStrength;
+        private MoveSpeed<GameObjectSelection> swimMoveSpeed;
         [SerializeField] private bool useHeadIK;
         
         #endregion
@@ -266,17 +267,17 @@ namespace MMOCombatantController.Runtime.Core
                     isGrounded = false;
                 }
             }
-
-            if (_groundDetected)
-            {
-                IsOnMovingPlatform = groundInfo.collider.TryGetComponent(out _baseMovingPlatform);
-            }
-
+            
             if (isGrounded)
             {
                 _canDoubleJump = true;
                 _characterMover.mode = CharacterMover.Mode.Walk;
                 _verticalSpeed = 0;
+                
+                if (_groundDetected)
+                {
+                    IsOnMovingPlatform = groundInfo.collider.TryGetComponent(out _baseMovingPlatform);
+                }
             }
             else
             {
@@ -284,7 +285,12 @@ namespace MMOCombatantController.Runtime.Core
 
                 BounceDownIfTouchedCeiling();
 
-                _verticalSpeed -= gravity * Time.deltaTime;
+                _verticalSpeed += gravity * Time.deltaTime;
+
+                if (_verticalSpeed < minVerticalSpeed)
+                {
+                    _verticalSpeed = minVerticalSpeed;
+                }
             }
 
             // Check auto run status. If the combatant gets a vertical movement, cancel auto run.
@@ -601,6 +607,7 @@ namespace MMOCombatantController.Runtime.Core
                 allowDoubleJump = settings.AllowDoubleJump;
                 jumpHeight = settings.JumpHeight;
                 gravity = settings.Gravity;
+                minVerticalSpeed = settings.MinVerticalSpeed;
                 rotationSpeed = settings.RotationSpeed;
                 swimLevel = settings.SwimLevel;
                 swimStrength = settings.SwimStrength;
@@ -642,10 +649,14 @@ namespace MMOCombatantController.Runtime.Core
             if (groundDetected)
             {
                 if (groundInfo.isOnFloor && _verticalSpeed < 0.1f)
+                {
                     _nextUngroundedTime = Time.time + TimeBeforeUngrounded;
+                }
             }
             else
+            {
                 _nextUngroundedTime = -1f;
+            }
 
             isGrounded = Time.time < _nextUngroundedTime;
             return groundDetected;

@@ -325,6 +325,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614f0c4ee8bd85f4a9765e884466bbf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allowDoubleJump: 1
+  jumpHeight: 5
+  gravity: -15
+  minVerticalSpeed: 0
+  rotationSpeed: 1
+  swimLevel: 1.25
+  swimStrength: 2.5
+  useHeadIK: 0
 --- !u!114 &-7339669897696964477
 MonoBehaviour:
   m_ObjectHideFlags: 0

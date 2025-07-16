@@ -19,49 +19,56 @@ namespace MMOCombatantController.Runtime.Core
         public bool CompAdd = false;
 
         [EditorSeparator]
+        [EditorTitleLabel("Base Movement")]
+        [EditorHelp(
+            "Rotation Speed",
+            MMOCombatantCharacterControllerTooltips.RotationSpeedTT,
+            ""
+        )]
+        public float RotationSpeed = 0.75f;
+        
+        [EditorHelp(
+            "Gravity",
+            MMOCombatantCharacterControllerTooltips.GravityTT,
+            ""
+        )]
+        public float Gravity = -15.0f;
+        
+        [EditorHelp(
+            "Min Vertical Speed",
+            MMOCombatantCharacterControllerTooltips.MinVerticalSpeedTT,
+            ""
+        )]
+        public float MinVerticalSpeed = -7.5f;
+        
+        [EditorSeparator]
         [EditorTitleLabel("Jump")]
         [EditorHelp(
             "Allow Double Jump",
-            "Allows the combatant to do a double jump if input provided.",
+            MMOCombatantCharacterControllerTooltips.AllowDoubleJumpTT,
             ""
         )]
         public bool AllowDoubleJump = false;
         
         [EditorHelp(
             "Jump Height",
-            "How high the combatant can jump.",
+            MMOCombatantCharacterControllerTooltips.JumpHeightTT,
             ""
         )]
         public float JumpHeight = 5.0f;
-        
-        [EditorHelp(
-            "Gravity",
-            "How fast the combatant falls down when not grounded or swimming.",
-            ""
-        )]
-        public float Gravity = 15.0f;
-        
-        [EditorSeparator]
-        [EditorTitleLabel("Movement")]
-        [EditorHelp(
-            "Rotation Speed",
-            "How fast the combatant turns as a multiplier of the Horizontal input.",
-            ""
-        )]
-        public float RotationSpeed = 0.75f;
 
         [EditorSeparator]
         [EditorTitleLabel("Swimming")]
         [EditorHelp(
             "Swim Level",
-            "How deep into water the character should be before considering them actually swimming.",
+            MMOCombatantCharacterControllerTooltips.SwimLevelTT,
             ""
         )]
         public float SwimLevel = 1.25f;
 
         [EditorHelp(
             "Swim Strength",
-            "How much force to apply when swimming up or down for a combatant.",
+            MMOCombatantCharacterControllerTooltips.SwimStrengthTT,
             ""
         )]
         public float SwimStrength = 2.5f;
@@ -72,7 +79,7 @@ namespace MMOCombatantController.Runtime.Core
         [EditorTitleLabel("Animation")]
         [EditorHelp(
             "Use Head IK",
-            "When activated will rotate combatant's head to look at camera direction if applicable or point of interest.",
+            MMOCombatantCharacterControllerTooltips.UseHeadIKTT,
             ""
         )]
         public bool UseHeadIK = false;
@@ -132,5 +139,18 @@ namespace MMOCombatantController.Runtime.Core
                 if (_combatantController != null) _combatantController.Stop();
             }
         }
+    }
+    
+    public static class MMOCombatantCharacterControllerTooltips
+    {
+        public const string RotationSpeedTT = "How fast the combatant turns as a multiplier of the Horizontal input.";
+        public const string GravityTT = "How fast the combatant falls down when not grounded or swimming.";
+        public const string MinVerticalSpeedTT = "Minimum amount of speed that should be used when gravity is starting to be applied. Most notable for helping keep clamped down on moving platforms.";
+        public const string AllowDoubleJumpTT = "Allows the combatant to do a double jump if input provided.";
+        public const string JumpHeightTT = "How high the combatant can jump.";
+        public const string SwimLevelTT = "How deep into water the character should be before considering them actually swimming.";
+        public const string SwimStrengthTT = "How much force to apply when swimming up or down for a combatant.";
+        public const string UseHeadIKTT =
+            "When activated will rotate combatant's head to look at camera direction if applicable or point of interest.";
     }
 }

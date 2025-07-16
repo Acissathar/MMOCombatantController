@@ -1,7 +1,7 @@
 {
   "name": "com.acissathar.mmocombatantcontroller",
   "displayName": "ORK MMO Combatant Character Controller",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "unity": "6000.0",
   "description": "An MMO inspired character controller specifically integrated for ORK Framework.",
   "author": {
