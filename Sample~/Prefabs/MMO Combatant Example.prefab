@@ -328,10 +328,16 @@ MonoBehaviour:
   allowDoubleJump: 1
   jumpHeight: 5
   gravity: -15
-  minVerticalSpeed: 0
+  minVerticalSpeed: -7.5
   rotationSpeed: 1
   swimLevel: 1.25
-  swimStrength: 2.5
+  swimLevelBuffer: 0
+  diveStrength: 2.5
+  useSwimStamina: 1
+  swimStatusValueAsset: {fileID: 0}
+  swimStaminaTickTime: 1
+  onlyWhenDiving: 0
+  drowningIsBlocking: 0
   useHeadIK: 0
 --- !u!114 &-7339669897696964477
 MonoBehaviour:

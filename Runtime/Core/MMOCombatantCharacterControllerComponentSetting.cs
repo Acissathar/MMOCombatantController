@@ -1,5 +1,5 @@
 using GamingIsLove.Makinom;
-
+using GamingIsLove.ORKFramework;
 using UnityEngine;
 
 namespace MMOCombatantController.Runtime.Core
@@ -67,13 +67,41 @@ namespace MMOCombatantController.Runtime.Core
         public float SwimLevel = 1.25f;
 
         [EditorHelp(
-            "Swim Strength",
-            MMOCombatantCharacterControllerTooltips.SwimStrengthTT,
+            "Swim Level Buffer",
+            MMOCombatantCharacterControllerTooltips.SwimLevelBufferTT,
             ""
         )]
-        public float SwimStrength = 2.5f;
+        public float SwimLevelBuffer = 0.0075f;
+        
+        [EditorHelp(
+            "Dive Strength",
+            MMOCombatantCharacterControllerTooltips.DiveStrengthTT,
+            ""
+        )]
+        public float DiveStrength = 2.5f;
         
         public MoveSpeed<GameObjectSelection> SwimSpeed = new (MoveSpeedType.Walk, 5);
+        
+        [EditorHelp("Use Swim Stamina", MMOCombatantCharacterControllerTooltips.UseSwimStaminaTT, "")]
+        public bool UseSwimStamina = false;
+        
+        [EditorHelp("Swim Stamina", MMOCombatantCharacterControllerTooltips.SwimStaminaTT, "")]
+        [EditorCondition("UseSwimStamina", true)]
+        public AssetSelection<StatusValueAsset> SwimStaminaStatusValue = new AssetSelection<StatusValueAsset>();
+
+        [EditorHelp("Swim Stamina Tick Time", MMOCombatantCharacterControllerTooltips.SwimStaminaTickTimeTT, "")]
+        public float SwimStaminaTickTime = 1.0f;
+        
+        [EditorHelp("Only When Diving", MMOCombatantCharacterControllerTooltips.OnlyWhenDivingTT, "")]
+        public bool OnlyWhenDiving = false;
+        
+        [EditorTitleLabel("(Optional) Drowning Machine")]
+        [EditorHelp("Drowning Schematic", MMOCombatantCharacterControllerTooltips.DrowningSchematicTT, "")]
+        public MakinomSchematicAsset DrowningSchematic;
+
+        [EditorHelp("Is Blocking", MMOCombatantCharacterControllerTooltips.DrowningSchematicIsBlockingTT, "")]
+        [EditorEndCondition]
+        public bool drowningIsBlocking = false;
         
         [EditorSeparator]
         [EditorTitleLabel("Animation")]
@@ -149,7 +177,14 @@ namespace MMOCombatantController.Runtime.Core
         public const string AllowDoubleJumpTT = "Allows the combatant to do a double jump if input provided.";
         public const string JumpHeightTT = "How high the combatant can jump.";
         public const string SwimLevelTT = "How deep into water the character should be before considering them actually swimming.";
-        public const string SwimStrengthTT = "How much force to apply when swimming up or down for a combatant.";
+        public const string SwimLevelBufferTT = "Buffer to apply to swim level checks to help account for float imprecision and different pivot points on characters.";
+        public const string DiveStrengthTT = "How much force to apply when swimming up or diving down for a combatant.";
+        public const string UseSwimStaminaTT = "Toggle to control whether or not to track swim stamina. When disabled, swim and dive time is not limited.";
+        public const string SwimStaminaTT = "Status value used for how long swimming can be done. A value of 1 is subtracted for each swim tick.";
+        public const string SwimStaminaTickTimeTT = "How many in seconds between each check of swim stamina. Use a value of 0 for every frame.";
+        public const string OnlyWhenDivingTT = "Only subtract swim stamina when diving (underwater). When unchecked, stamina will also be subtracted when at the water surface.";
+        public const string DrowningSchematicTT = "Schematic to run every tick when there is no more swim stamina remaining.";
+        public const string DrowningSchematicIsBlockingTT = "Use true if this is a blocking schematic, otherwise false.\nOnly one blocking schematic can be executed at a time.";
         public const string UseHeadIKTT =
             "When activated will rotate combatant's head to look at camera direction if applicable or point of interest.";
     }

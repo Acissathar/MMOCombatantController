@@ -1,4 +1,5 @@
 using GamingIsLove.Makinom;
+using GamingIsLove.Makinom.Schematics;
 using GamingIsLove.ORKFramework;
 
 using MenteBacata.ScivoloCharacterController;
@@ -29,8 +30,15 @@ namespace MMOCombatantController.Runtime.Core
         [SerializeField] private float minVerticalSpeed;
         [SerializeField] private float rotationSpeed;
         [SerializeField] private float swimLevel;
-        [SerializeField] private float swimStrength;
+        [SerializeField] private float swimLevelBuffer;
+        [SerializeField] private float diveStrength;
         private MoveSpeed<GameObjectSelection> swimMoveSpeed;
+        [SerializeField] private bool useSwimStamina;
+        [SerializeField] private StatusValueAsset swimStatusValueAsset;
+        [SerializeField] private float swimStaminaTickTime;
+        [SerializeField] private bool onlyWhenDiving;
+        private Schematic drowningSchematic;
+        [SerializeField] private bool drowningIsBlocking;
         [SerializeField] private bool useHeadIK;
         
         #endregion
@@ -56,6 +64,8 @@ namespace MMOCombatantController.Runtime.Core
         private float WalkSpeed => Combatant.Setting.moveSettings.MoveSpeed.GetWalkSpeed(Combatant);
         private float RunSpeed => Combatant.Setting.moveSettings.MoveSpeed.GetRunSpeed(Combatant);
         private float SwimSpeed => swimMoveSpeed.GetCombatantSpeed(Combatant);
+
+        private StatusValue SwimStatusValue => Combatant.Status.Get(swimStatusValueAsset.Settings);
         
         #endregion
         
@@ -80,6 +90,8 @@ namespace MMOCombatantController.Runtime.Core
         private bool _canDoubleJump;
         private float _distanceFromWaterSurface;
         private float _weightIK;
+        private float _timeSinceLastSwimTick;
+        private float _swimStatusValueCurrent;
         
         #endregion
         
@@ -140,6 +152,10 @@ namespace MMOCombatantController.Runtime.Core
             if (Combatant == null)
             {
                 InternalDebug.LogWarning("Combatant not found.", gameObject);
+            }
+            else if(useSwimStamina)
+            {
+                _swimStatusValueCurrent = SwimStatusValue.GetValue();
             }
             
             if (InWater)
@@ -376,6 +392,8 @@ namespace MMOCombatantController.Runtime.Core
                 _moveContacts,
                 out _contactCount
             );
+            
+            SwimStaminaOutOfWaterTick();
         }
 
         private void SwimmingLocomotion()
@@ -395,7 +413,7 @@ namespace MMOCombatantController.Runtime.Core
             {
                 _canDoubleJump = true;
 
-                if (Inputs.Jump && _distanceFromWaterSurface - 0.075f <= swimLevel)
+                if (Inputs.Jump && _distanceFromWaterSurface - swimLevelBuffer <= swimLevel)
                 {
                     jumpingFromWater = true;
 
@@ -415,11 +433,11 @@ namespace MMOCombatantController.Runtime.Core
                 }
                 else if (Inputs.SwimUp && _distanceFromWaterSurface > swimLevel)
                 {
-                    _verticalSpeed = swimStrength;
+                    _verticalSpeed = diveStrength;
                 }
                 else if (Inputs.SwimDown)
                 {
-                    _verticalSpeed = -swimStrength;
+                    _verticalSpeed = -diveStrength;
                     _animator.SetFloat(_yAxisMovementHash, -1.0f, 0.1f, Time.deltaTime);
                 }
             }
@@ -488,6 +506,8 @@ namespace MMOCombatantController.Runtime.Core
                     ),
                     transform.position.z
                 );
+
+                SwimStaminaInWaterTick();
             }
         }
 
@@ -516,10 +536,84 @@ namespace MMOCombatantController.Runtime.Core
                 _currentMoveState = isGrounded ? MoveState.Grounded : MoveState.Airborne;
             }
         }
+
+        private void SwimStaminaInWaterTick()
+        {
+            if (swimStatusValueAsset)
+            {
+                if (useSwimStamina)
+                {
+                    if (onlyWhenDiving)
+                    {
+                        if (_distanceFromWaterSurface - swimLevelBuffer  > swimLevel)
+                        {
+                            _timeSinceLastSwimTick += Time.deltaTime;
+
+                            if (_timeSinceLastSwimTick >= swimStaminaTickTime)
+                            {
+                                _timeSinceLastSwimTick = 0.0f;
+                                _swimStatusValueCurrent--;
+                                
+                                if (_swimStatusValueCurrent <= 0.0f)
+                                {
+                                    _swimStatusValueCurrent = 0.0f;
+                                    drowningSchematic.PlaySchematic(gameObject, null, gameObject, gameObject, drowningIsBlocking,
+                                        MachineUpdateType.Update, Combatant.InputID);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _timeSinceLastSwimTick += Time.deltaTime;
+
+                            if (_timeSinceLastSwimTick >= swimStaminaTickTime)
+                            {
+                                _timeSinceLastSwimTick = 0.0f;
+                                _swimStatusValueCurrent++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _timeSinceLastSwimTick += Time.deltaTime;
+                        
+                        if (_timeSinceLastSwimTick >= swimStaminaTickTime)
+                        {
+                            _timeSinceLastSwimTick = 0.0f;
+                            _swimStatusValueCurrent--;
+                            
+                            if (_swimStatusValueCurrent <= 0.0f)
+                            {
+                                _swimStatusValueCurrent = 0.0f;
+                                drowningSchematic.PlaySchematic(gameObject, null, gameObject, gameObject, drowningIsBlocking,
+                                    MachineUpdateType.Update, Combatant.InputID);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void SwimStaminaOutOfWaterTick()
+        {
+            if (swimStatusValueAsset)
+            {
+                if (useSwimStamina && _swimStatusValueCurrent < SwimStatusValue.GetValue())
+                {
+                    _timeSinceLastSwimTick += Time.deltaTime;
+
+                    if (_timeSinceLastSwimTick >= swimStaminaTickTime)
+                    {
+                        _timeSinceLastSwimTick = 0.0f;
+                        _swimStatusValueCurrent++;
+                    }
+                }
+            }
+        }
         
         private void GetControllerInputs()
         {
-            if (MMOCombatantThirdPersonFollowCameraController != null)
+            if (MMOCombatantThirdPersonFollowCameraController)
             {
                 switch (MMOCombatantThirdPersonFollowCameraController.CombatantCameraState)
                 {
@@ -610,9 +704,22 @@ namespace MMOCombatantController.Runtime.Core
                 minVerticalSpeed = settings.MinVerticalSpeed;
                 rotationSpeed = settings.RotationSpeed;
                 swimLevel = settings.SwimLevel;
-                swimStrength = settings.SwimStrength;
+                swimLevelBuffer = settings.SwimLevelBuffer;
+                diveStrength = settings.DiveStrength;
                 swimMoveSpeed = settings.SwimSpeed;
+                useSwimStamina = settings.UseSwimStamina;
+                swimStatusValueAsset = settings.SwimStaminaStatusValue.StoredAsset;
+                swimStaminaTickTime = settings.SwimStaminaTickTime;
+                onlyWhenDiving = settings.OnlyWhenDiving;
+                drowningSchematic =  new Schematic(settings.DrowningSchematic);
+                drowningIsBlocking = settings.drowningIsBlocking;
                 useHeadIK = settings.UseHeadIK;
+                
+                // Quick validation checks just to catch some things early
+                if (useSwimStamina && settings.SwimStaminaStatusValue.StoredAsset == null)
+                {
+                    InternalDebug.LogError("Use Swim Stamina is true but no swim stamina status value is set.", gameObject);
+                }
             }
         }
         
