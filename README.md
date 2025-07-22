@@ -92,6 +92,9 @@ Project Link: [https://github.com/Acissathar/NavMesh-Cleaner/](https://github.co
 
 ## Version History
 
+* 0.3
+    * Added support for swim stamina. This supports using an ORK status value for diving, any swimming (including surface level), both, or neither. 
+
 * 0.2
     * Initial Beta Release
 
