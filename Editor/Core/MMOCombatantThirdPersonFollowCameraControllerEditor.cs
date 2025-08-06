@@ -8,6 +8,9 @@ namespace MMOCombatantController.Editor.Core
     [CustomEditor(typeof(MMOCombatantThirdPersonFollowCameraController))]
     public class MMOCombatantThirdPersonFollowCameraControllerEditor : UnityEditor.Editor
     {
+        private SerializedProperty _tiltTransformProp;
+        private SerializedProperty _cinemachineCameraProp;
+        
         private SerializedProperty _heightOffsetProp;
         private SerializedProperty _maxDistanceProp;
         private SerializedProperty _maxTiltProp;
@@ -26,6 +29,8 @@ namespace MMOCombatantController.Editor.Core
         
         private void OnEnable()
         {
+            _tiltTransformProp = serializedObject.FindProperty("tilt");
+            _cinemachineCameraProp = serializedObject.FindProperty("cinemachineCamera");
             _heightOffsetProp = serializedObject.FindProperty("heightOffset");
             _maxDistanceProp = serializedObject.FindProperty("maxDistance");
             _maxTiltProp = serializedObject.FindProperty("maxTilt");
@@ -44,6 +49,13 @@ namespace MMOCombatantController.Editor.Core
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            
+            EditorGUILayout.LabelField("Component References", EditorStyles.boldLabel);
+            
+            EditorGUILayout.PropertyField(_tiltTransformProp, new GUIContent("Tilt", "Camera Tilt transform."));
+            EditorGUILayout.PropertyField(_cinemachineCameraProp, new GUIContent("Cinemachine Camera", "Actual Cinemachine Camera component."));
+            
+            EditorGUILayout.Space();
             
             EditorGUILayout.LabelField("Camera Position Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_heightOffsetProp, new GUIContent("Height Offset", "How high up from the camera target pivot that the camera is."));
