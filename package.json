@@ -16,7 +16,7 @@
     {
       "displayName": "Controller Sandbox Demo",
       "description": "A demo scene to test the character controller, along with a few extra prefabs and examples of controller usage.",
-      "path": "Samples~"
+      "path": "Sample~"
     }
   ]
 }
